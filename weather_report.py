@@ -6,7 +6,15 @@ import re
 
 def scrape_weather():
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless") 
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--no-first-run")
+    options.add_argument("--no-default-browser-check")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("--user-data-dir=/tmp/chrome-user-data")
     driver = webdriver.Chrome(options=options)
 
     driver.get("https://www.tmd.go.th/weather/province/past24Hr/rayong/55/478301")
