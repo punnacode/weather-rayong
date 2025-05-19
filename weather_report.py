@@ -44,25 +44,28 @@ def scrape_weather():
     df = pd.DataFrame(valid_data, columns=columns)
 
     def thai_date_to_datetime(thai_date_str):
-        clean_str = re.sub(r'เวลา\s*|\s*น\.', '', thai_date_str)
-        parts = clean_str.split()
+        thai_months = {
+            'มกราคม': 1, 'กุมภาพันธ์': 2, 'มีนาคม': 3, 'เมษายน': 4, 'พฤษภาคม': 5,
+            'มิถุนายน': 6, 'กรกฎาคม': 7, 'สิงหาคม': 8, 'กันยายน': 9, 'ตุลาคม': 10,
+            'พฤศจิกายน': 11, 'ธันวาคม': 12
+        }
 
-        if len(parts) < 5 or ':' not in parts[4]:
-            return None  
-
-        try:
-            day = int(parts[0])
-            thai_months = {
-                'มกราคม': 1, 'กุมภาพันธ์': 2, 'มีนาคม': 3, 'เมษายน': 4, 'พฤษภาคม': 5,
-                'มิถุนายน': 6, 'กรกฎาคม': 7, 'สิงหาคม': 8, 'กันยายน': 9, 'ตุลาคม': 10,
-                'พฤศจิกายน': 11, 'ธันวาคม': 12
-            }
-            month = thai_months.get(parts[1], 1)
-            year = int(parts[2]) - 543
-            hour, minute = map(int, parts[4].split(':'))
-            return pd.Timestamp(year, month, day, hour, minute)
-        except:
+        pattern = r'(\d{1,2})\s+([ก-๙]+)\s+(\d{4})\s+เวลา\s+(\d{1,2}):(\d{2})'
+        match = re.search(pattern, thai_date_str)
+        if not match:
             return None
+
+        day = int(match.group(1))
+        month_name = match.group(2)
+        year = int(match.group(3)) - 543 
+        hour = int(match.group(4))
+        minute = int(match.group(5))
+
+        month = thai_months.get(month_name)
+        if not month:
+            return None
+
+        return pd.Timestamp(year, month, day, hour, minute) 
 
 
     df['datetime'] = df['วันที่'].apply(thai_date_to_datetime)
