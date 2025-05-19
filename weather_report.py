@@ -1,13 +1,10 @@
 from selenium import webdriver
-import chromedriver_autoinstaller
 from selenium.webdriver.common.by import By
 import pandas as pd
 import time
 import re
 
 def scrape_weather():
-    chromedriver_autoinstaller.install()
-
     options = webdriver.ChromeOptions()
     options.add_argument("--headless") 
     driver = webdriver.Chrome(options=options)
