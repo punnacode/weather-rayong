@@ -32,22 +32,16 @@ def scrape_weather():
     data = []
     for row in rows:
         cells = row.find_elements(By.TAG_NAME, "th") + row.find_elements(By.TAG_NAME, "td")
-        data.append([cell.text.strip() for cell in cells])
+        texts = [cell.text.strip() for cell in cells]
+        if len(texts) >= 4:  
+            data.append(texts[:4])
 
     driver.quit()
 
-    header_len = len(data[0]) + len(data[1]) - 1
-    clean_data = [row for row in data[1:] if len(row) in {header_len, header_len - 1, header_len + 1}]
-    for row in clean_data:
-        if len(row) < header_len:
-            row.insert(5, '-')
-            row[6] = '0'
+    data = [row for row in data if len(row) == 4]
 
-    columns = ['วันที่', 'อุณหภูมิ (°C)', 'จุดน้ำค้าง (°C)', 'ความชื้นสัมพัทธ์ (%)', 'ความกดอากาศ (hPa)',
-               'ทิศลม', 'ความเร็วลม (กม./ชม.)', 'ทัศนวิสัย (กม.)', 'ฝน 3 ชม. (มม.)', 'เมฆ']
-    valid_data = [row for row in clean_data if len(row) == len(columns)]
-
-    df = pd.DataFrame(valid_data, columns=columns)
+    columns = ['วันที่', 'อุณหภูมิ (°C)', 'จุดน้ำค้าง (°C)', 'ความชื้นสัมพัทธ์ (%)']
+    df = pd.DataFrame(data[1:], columns=columns)  
 
     def thai_date_to_datetime(thai_date_str):
         thai_months = {
@@ -74,6 +68,7 @@ def scrape_weather():
     df['datetime'] = df['วันที่'].apply(thai_date_to_datetime)
     df = df.dropna(subset=['datetime'])
     df = df.sort_values('datetime').reset_index(drop=True)
+
     df = df.drop(columns=['datetime'])
 
     return df
