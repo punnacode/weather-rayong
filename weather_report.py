@@ -1,5 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 import pandas as pd
 import time
 import re
@@ -10,19 +13,22 @@ def scrape_weather():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--no-first-run")
-    options.add_argument("--no-default-browser-check")
     options.add_argument("--disable-extensions")
-    options.add_argument("--remote-debugging-port=9222")
-    options.add_argument("--user-data-dir=/tmp/chrome-user-data")
+    options.add_argument("--user-data-dir=/tmp/chrome-data") 
+
     driver = webdriver.Chrome(options=options)
 
     driver.get("https://www.tmd.go.th/weather/province/past24Hr/rayong/55/478301")
-    time.sleep(5)
 
-    table = driver.find_element(By.TAG_NAME, "table")
+    try:
+        table = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.TAG_NAME, "table"))
+        )
+    except TimeoutException:
+        driver.quit()
+        raise Exception("โหลดตารางไม่สำเร็จภายใน 10 วินาที")
+
     rows = table.find_elements(By.TAG_NAME, "tr")
-
     data = []
     for row in rows:
         cells = row.find_elements(By.TAG_NAME, "th") + row.find_elements(By.TAG_NAME, "td")
@@ -57,18 +63,17 @@ def scrape_weather():
 
         day = int(match.group(1))
         month_name = match.group(2)
-        year = int(match.group(3)) - 543 
+        year = int(match.group(3)) - 543
         hour = int(match.group(4))
         minute = int(match.group(5))
-
         month = thai_months.get(month_name)
         if not month:
             return None
-
-        return pd.Timestamp(year, month, day, hour, minute) 
-
+        return pd.Timestamp(year, month, day, hour, minute)
 
     df['datetime'] = df['วันที่'].apply(thai_date_to_datetime)
+    df = df.dropna(subset=['datetime'])
     df = df.sort_values('datetime').reset_index(drop=True)
     df = df.drop(columns=['datetime'])
+
     return df
