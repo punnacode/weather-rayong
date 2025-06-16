@@ -21,7 +21,7 @@ def scrape_weather():
     driver.get("https://www.tmd.go.th/weather/province/past24Hr/rayong/55/478301")
 
     try:
-        table = WebDriverWait(driver, 10).until(
+        table = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.TAG_NAME, "table"))
         )
     except TimeoutException:
